@@ -4365,8 +4365,8 @@ fn C.TextCopy(&char, &char) int
 
 // Copy one string to another, returns bytes copied
 @[inline]
-pub fn text_copy(dst string, src string) int {
-	return C.TextCopy(&char(dst.str), src.str)
+pub fn text_copy(dst &u8, src string) int {
+	return C.TextCopy(&char(dst), src.str)
 }
 
 fn C.TextIsEqual(&char, &char) bool

@@ -104,12 +104,16 @@ flag_enums = {
 	"raylib": [ "ConfigFlags", "Gesture" ]
 }
 
-# These take a plain "char *" too, but only to free it. Their counterparts
-# (LoadFileText, LoadUTF8) hand back a V string wrapping that same pointer, so
-# they keep taking a string.
-unload_string_functions = [
+# Functions whose plain "char *" params are not output buffers, they keep
+# taking a V string instead of the &u8 used for writable buffers:
+# - UnloadFileText/UnloadUTF8 only free the pointer and LoadFileText/LoadUTF8
+#   hand that same pointer back wrapped in a V string.
+# - SaveFileText only reads its text; the missing const is an upstream typo
+#   (fixed to "const char *" after 5.5).
+char_ptr_keep_string = [
 	"UnloadFileText",
 	"UnloadUTF8",
+	"SaveFileText",
 ]
 
 # Raylib uses integer types for its enum arguments, so we will convert those to
@@ -288,7 +292,7 @@ def generate(path: str, json_path: str, lib: str):
 				# them as raw pointers instead.
 				param["is_mutable_char_ptr"] = (
 					param["type"].strip() == "char *" and
-					c_name not in unload_string_functions
+					c_name not in char_ptr_keep_string
 				)
 
 				# If this arg represents an enum flag, then we

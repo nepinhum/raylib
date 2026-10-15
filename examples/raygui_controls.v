@@ -10,22 +10,6 @@ fn rec(x f32, y f32, width f32, height f32) raylib.Rectangle {
 	return raylib.Rectangle{x, y, width, height}
 }
 
-fn writable_buffer(size int, initial string) []u8 {
-	mut buffer := []u8{len: size, init: 0}
-	bytes := initial.bytes()
-	count := if bytes.len < size - 1 { bytes.len } else { size - 1 }
-	for i in 0 .. count {
-		buffer[i] = bytes[i]
-	}
-	return buffer
-}
-
-fn buffer_string(buffer []u8) string {
-	unsafe {
-		return (&u8(buffer.data)).vstring()
-	}
-}
-
 fn main() {
 	raylib.init_window(screen_width, screen_height, 'raygui controls test suite')
 	defer {
@@ -44,18 +28,18 @@ fn main() {
 	mut int_value := 0
 	mut int_value_edit := false
 
-	mut text_box := writable_buffer(64, 'Text box')
+	mut text_box := raygui.text_buf('Text box', 64)
 	mut text_box_edit := false
-	mut float_text := writable_buffer(64, '12.50')
+	mut float_text := raygui.text_buf('12.50', raygui.value_box_float_buf_len)
 	mut float_value := f32(12.5)
 	mut float_edit := false
-	mut input_text := writable_buffer(256, '')
+	mut input_text := raygui.text_buf('', 256)
 	mut secret_view_active := false
 	mut show_input_box := false
 	mut show_message_box := false
 
-	mut multiline := writable_buffer(1024,
-		'Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n\nThis mutable buffer also exercises GuiTextBox with a large capacity. Edit this text to verify insertion, deletion and wrapping.')
+	mut multiline := raygui.text_buf('Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n\nThis mutable buffer also exercises GuiTextBox with a large capacity. Edit this text to verify insertion, deletion and wrapping.',
+		1024)
 	mut multiline_edit := false
 
 	mut list_scroll := 0
@@ -120,23 +104,21 @@ fn main() {
 			int_value_edit = !int_value_edit
 		}
 
-		if raygui.gui_text_box(rec(30, 245, 155, 30), &u8(text_box.data), text_box.len - 1,
-			text_box_edit) != 0 {
+		if raygui.gui_text_box_buf(rec(30, 245, 155, 30), mut text_box, text_box_edit) != 0 {
 			text_box_edit = !text_box_edit
 		}
 
-		if raygui.gui_value_box_float(rec(30, 285, 155, 30), 'float', &u8(float_text.data),
-			&float_value, float_edit) != 0 {
+		if raygui.gui_value_box_float_buf(rec(30, 285, 155, 30), 'float', mut float_text, &float_value, float_edit) != 0 {
 			float_edit = !float_edit
 		}
 
 		if raygui.gui_button(rec(30, 330, 155, 30), '#6#Open text input') != 0 {
 			show_input_box = true
 		}
-		raygui.gui_label(rec(30, 375, 155, 20), 'text: ${buffer_string(text_box)}')
-		raygui.gui_label(rec(30, 400, 155, 20), 'float text: ${buffer_string(float_text)}')
+		raygui.gui_label(rec(30, 375, 155, 20), 'text: ${raygui.text_buf_str(text_box)}')
+		raygui.gui_label(rec(30, 400, 155, 20), 'float text: ${raygui.text_buf_str(float_text)}')
 		raygui.gui_label(rec(30, 425, 155, 20), 'float value: ${float_value:.2f}')
-		raygui.gui_label(rec(30, 450, 155, 20), 'input: ${buffer_string(input_text)}')
+		raygui.gui_label(rec(30, 450, 155, 20), 'input: ${raygui.text_buf_str(input_text)}')
 
 		raygui.gui_group_box(rec(215, 15, 210, 575), 'LISTS / TOGGLES')
 		raygui.gui_list_view(rec(230, 45, 180, 180),
@@ -159,12 +141,11 @@ fn main() {
 		raygui.gui_grid(rec(575, 455, 100, 100), '', 20, 3, &mouse_cell)
 
 		raygui.gui_group_box(rec(710, 15, 375, 575), 'MULTILINE MUTABLE TEXT')
-		if raygui.gui_text_box(rec(725, 45, 345, 450), &u8(multiline.data), multiline.len - 1,
-			multiline_edit) != 0 {
+		if raygui.gui_text_box_buf(rec(725, 45, 345, 450), mut multiline, multiline_edit) != 0 {
 			multiline_edit = !multiline_edit
 		}
 		raygui.gui_status_bar(rec(725, 520, 345, 25),
-			'bytes: ${buffer_string(multiline).len}/${multiline.len - 1}')
+			'bytes: ${raygui.text_buf_str(multiline).len}/${multiline.len - 1}')
 
 		if show_input_box {
 			raygui.gui_unlock()
@@ -174,9 +155,8 @@ fn main() {
 				b: 245
 				a: 220
 			})
-			result := raygui.gui_text_input_box(rec(410, 245, 280, 160), 'Mutable input',
-				'Type text and press OK', 'OK;Cancel', &u8(input_text.data), input_text.len - 1,
-				&secret_view_active)
+			result := raygui.gui_text_input_box_buf(rec(410, 245, 280, 160), 'Mutable input',
+				'Type text and press OK', 'OK;Cancel', mut input_text, &secret_view_active)
 			if result == 1 || result == 2 || result == 0 {
 				show_input_box = false
 			}
